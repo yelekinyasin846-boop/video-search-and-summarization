@@ -239,14 +239,33 @@ def generate_platform_mode(
         step_suffix = f"-step-{idx}" if n > 1 else ""
 
         # ---- instruction.md ------------------------------------------------
-        # Per-step scoping: step 1 deploys (host is bare); steps 2+ run
-        # against the already-deployed stack. We deliberately do NOT include
-        # the spec's `env` field — it's a multi-step narrative ("deploy then
-        # add then verify then poll") that, when pasted into a single step's
-        # instruction, reads as a directive to run the whole chain in this
-        # trial. Each step's `query` already carries the step-specific intent;
-        # static host context lives in the leading paragraph below.
-        if idx == 1:
+        # Two cases:
+        #
+        # 1. Spec has NO `deploy_mode` (e.g. alerts_vlm_real_time): the agent
+        #    is expected to deploy in step 1 (bare host).  Steps 2+ run against
+        #    the stack that step 1 deployed.  We do NOT paste the spec's `env`
+        #    field here — it reads as a directive to run the whole chain.
+        #
+        # 2. Spec HAS `deploy_mode` (e.g. routing_vlm_e_boundary,
+        #    slack_lifecycle): the harness coordinator pre-deploys the alerts
+        #    profile before any trial runs.  ALL steps — including step 1 — run
+        #    against an already-deployed stack.  We paste the spec's `env` to
+        #    give the agent the correct starting context.
+        spec_env: str = str(spec.get("env") or "")
+        has_prereq_deploy = bool(
+            spec.get("deploy_mode") or spec.get("prerequisite_deploy_mode")
+        )
+
+        if has_prereq_deploy:
+            # All steps: stack is pre-deployed; paste the spec env so the agent
+            # knows its starting state.
+            leading = [
+                f"Use the `/vss-manage-alerts` skill on this `{platform}` host.",
+                f"Starting context: {spec_env}" if spec_env else
+                    "The VSS **alerts** profile is already deployed.",
+            ]
+        elif idx == 1:
+            # No prereq deploy: step 1 is responsible for deploying.
             leading = [
                 f"Use the `/vss-manage-alerts` skill (and `/vss-deploy-profile` as needed) on this bare `{platform}` host.",
                 "Docker + NVIDIA Container Toolkit are available, `NGC_CLI_API_KEY` is set,",

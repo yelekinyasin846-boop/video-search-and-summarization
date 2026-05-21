@@ -635,25 +635,40 @@ echo "synced $REPO to $(git rev-parse --short HEAD)"
 
     async def upload_dir(self, source_dir: Path | str, target_dir: str) -> None:
         assert self._instance_name
-        # brev copy has broken directory nesting behaviour.  Use tar
-        # piped over brev exec: tar locally, base64-encode, send via
-        # exec, decode+untar on the remote side.
+        # brev copy has broken directory nesting behaviour.  We tar the directory
+        # locally, copy the tar file via `brev copy` (file-based, no arg-size limit),
+        # then unpack remotely.  The previous base64-in-shell-arg approach hit the
+        # OS E2BIG limit (~131 KB) when skill dirs grew beyond ~100 KB compressed.
         src = str(source_dir).rstrip("/")
-        import subprocess as _sp, base64 as _b64
-        tar_bytes = _sp.check_output(
-            ["tar", "-czf", "-", "-C", src, "."],
-            timeout=60,
-        )
-        encoded = _b64.b64encode(tar_bytes).decode()
-        result = await _run_brev_exec(
-            self._instance_name,
-            f"sudo mkdir -p {shlex.quote(target_dir)} && "
-            f"sudo chown $(whoami):$(id -gn) {shlex.quote(target_dir)} && "
-            f"echo '{encoded}' | base64 -d | tar -xzf - -C {shlex.quote(target_dir)}",
-            timeout=120,
-        )
-        if result.return_code != 0:
-            raise RuntimeError(f"Upload dir failed: {result.stderr}")
+        import subprocess as _sp, tempfile as _tf, os as _os
+        with _tf.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            _sp.check_call(
+                ["tar", "-czf", tmp_path, "-C", src, "."],
+                timeout=60,
+            )
+            # Upload the tar file via brev copy (no shell arg size limit)
+            remote_tmp = f"/tmp/harbor-upload-{uuid.uuid4().hex[:8]}.tar.gz"
+            copy_result = await _run_brev_copy(
+                tmp_path,
+                f"{self._instance_name}:{remote_tmp}",
+            )
+            if copy_result.return_code != 0:
+                raise RuntimeError(f"Upload dir (copy) failed: {copy_result.stderr}")
+            # Unpack on the remote
+            result = await _run_brev_exec(
+                self._instance_name,
+                f"sudo mkdir -p {shlex.quote(target_dir)} && "
+                f"sudo chown $(whoami):$(id -gn) {shlex.quote(target_dir)} && "
+                f"tar -xzf {shlex.quote(remote_tmp)} -C {shlex.quote(target_dir)} && "
+                f"rm -f {shlex.quote(remote_tmp)}",
+                timeout=120,
+            )
+            if result.return_code != 0:
+                raise RuntimeError(f"Upload dir (unpack) failed: {result.stderr}")
+        finally:
+            _os.unlink(tmp_path)
 
     async def download_file(self, source_path: str, target_path: Path | str) -> None:
         assert self._instance_name
