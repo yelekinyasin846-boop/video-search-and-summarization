@@ -306,8 +306,8 @@ resolve_vss_gateway_container() {
 apply_vss_policy() {
   local policy_file="${NEMOCLAW_POLICY_FILE}"
 
-  if ! have openshell; then
-    log "ERROR: OpenShell is not available; cannot apply custom policy from ${policy_file}"
+  if ! have nemoclaw; then
+    log "ERROR: nemoclaw CLI is not available; cannot apply preset from ${policy_file}"
     return 1
   fi
 
@@ -316,8 +316,12 @@ apply_vss_policy() {
     return 1
   fi
 
-  log "Applying custom policy file ${policy_file} to sandbox ${NEMOCLAW_SANDBOX_NAME}"
-  openshell policy set --policy "$policy_file" --wait "$NEMOCLAW_SANDBOX_NAME"
+  # The VSS preset is applied via `nemoclaw policy-add --from-file`, which
+  # merges into the live sandbox policy. `openshell policy set --policy`
+  # was the legacy path; it replaces the whole policy (including base
+  # filesystem/landlock/process rules) and OpenShell rejects the result.
+  log "Applying VSS preset ${policy_file} to sandbox ${NEMOCLAW_SANDBOX_NAME}"
+  nemoclaw "$NEMOCLAW_SANDBOX_NAME" policy-add --from-file "$policy_file" --yes
 }
 
 install_vss_openclaw_plugin() {
