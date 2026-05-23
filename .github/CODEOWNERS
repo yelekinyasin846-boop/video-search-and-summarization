@@ -54,3 +54,23 @@ Gemfile                 @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
 Dockerfile              @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
 *.Dockerfile            @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
 Dockerfile.*            @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+
+# Compose files.
+# A compose file pins service image tags — a tag change can swap the
+# underlying base image (different bundled packages, different licenses)
+# without any language-level manifest change. Same OSRB concern as a
+# Dockerfile bump.
+compose.yaml            @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+compose.yml             @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+docker-compose.yaml     @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+docker-compose.yml      @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+
+# 3rd-party license inventories — filename variants.
+# Some components ship the inventory as `LICENSE.3rdparty` (no hyphen,
+# no .txt) or `3rdParty_Licenses[.md]`. The `LICENSE-3rd-party.txt` rule
+# in the lockfile section above covers the hyphenated form; the patterns
+# below cover the remaining variants so every flavor routes to OSRB.
+LICENSE.3rdparty        @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+LICENSE.3rdParty        @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+3rdParty_Licenses       @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
+3rdParty_Licenses.md    @NVIDIA-AI-Blueprints/VSS_OSRB_Approvers
