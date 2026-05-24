@@ -98,5 +98,3 @@ Key environment variables:
 | `VLM_MODEL` | Vision-language model for summarization | `nvidia/llama-3.2-90b-vision-instruct` |
 | `VECTOR_DB_URL` | Vector database connection URL | `http://milvus:19530` |
 | `TOP_K_DEFAULT` | Default number of search results returned | `5` |
-
-> **Personal note:** I'm using `TOP_K_DEFAULT=10` in my local `.env` since I find more results useful when exploring unfamiliar video libraries.
