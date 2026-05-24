@@ -97,32 +97,6 @@ Key environment variables:
 | `EMBEDDING_MODEL` | Multimodal embedding model | `nvidia/nvclip` |
 | `VLM_MODEL` | Vision-language model for summarization | `nvidia/llama-3.2-90b-vision-instruct` |
 | `VECTOR_DB_URL` | Vector database connection URL | `http://milvus:19530` |
-| `FRAME_EXTRACTION_FPS` | Frames per second for extraction | `1` |
+| `TOP_K_DEFAULT` | Default number of search results returned | `5` |
 
-## Development
-
-```bash
-# Install dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-
-# Run linting
-ruff check src/
-```
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) and submit pull requests via our [PR template](.github/PULL_REQUEST_TEMPLATE.md).
-
-For bugs, use the [bug report form](.github/ISSUE_TEMPLATE/bug_report_form.yml).
-For features, use the [feature request form](.github/ISSUE_TEMPLATE/feature_request_form.yml).
-
-## License
-
-See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-Built on top of [NVIDIA AI Blueprints](https://github.com/NVIDIA-AI-Blueprints/video-search-and-summarization) and powered by NVIDIA NIM microservices.
+> **Personal note:** I'm using `TOP_K_DEFAULT=10` in my local `.env` since I find more results useful when exploring unfamiliar video libraries.
