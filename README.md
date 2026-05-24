@@ -98,3 +98,5 @@ Key environment variables:
 | `VLM_MODEL` | Vision-language model for summarization | `nvidia/llama-3.2-90b-vision-instruct` |
 | `VECTOR_DB_URL` | Vector database connection URL | `http://milvus:19530` |
 | `TOP_K_DEFAULT` | Default number of search results returned | `5` |
+
+> **Personal note:** I've been testing this primarily with `top_k=10` for better recall when searching my home video archive — bumping `TOP_K_DEFAULT` to `10` in `.env` works well if you have a large collection.
